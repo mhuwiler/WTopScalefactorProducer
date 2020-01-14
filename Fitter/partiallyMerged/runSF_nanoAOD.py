@@ -12,6 +12,9 @@ setTDRStyle()
 
 from ROOT import *
 
+# To do: use RDataFrame to test cuts among years and find the cut for each year that allows a constant background efficiency 
+#        Before building the RooFit workspace 
+
 parser = OptionParser()
 
 # --- Tagging options
@@ -176,6 +179,52 @@ def doFitsToMC():
     boostedW_fitter_em.get_datasets_fit_minor_bkg()
     print "Finished fitting MC! Plots can be found in plots_*_MCfits. Printing workspace:"
 #    workspace4fit_.Print()
+
+def GetFakeRate(workspace, samples, category): 
+    rrv_number_totalBackground = {}
+    nBackgroundPass = {}
+    nBackgroundPassError = {}
+    nTotalBackground = 0 
+    nTotalBackgroundErrorSquared = 0
+
+    useSideBands = True
+    if (useSideBands): 
+        rrv_number_bkg_sb_lo = {}
+        rrv_number_bkg_sb_hi = {}
+
+    signalregion = {
+        'HP' : "dataset_signal_region", 
+        'LP' : "dataset_signal_region_before_cut",
+        'total' : "ttbar", 
+    }
+
+    postfix = {
+        'HP' : "", 
+        'LP' : "", 
+        'total' : "_extremefailtau2tau1cut", 
+    }
+
+    useSideBands = useSideBands and (category == 'HP')
+
+
+    for sample in samples: 
+        rrv_number_totalBackground[sample] = workspace.var("rrv_number_"+signalregion[category]+"_"+sample+postfix[category]+"_em_mj")
+        print "rrv_number_"+signalregion[category]+"_"+sample+postfix[category]+"_em_mj"
+        if (useSideBands): 
+            rrv_number_bkg_sb_lo[sample] = workspace.var("rrv_number_dataset_sb_lo_"+sample+"_em_mj")
+            rrv_number_bkg_sb_hi[sample] = workspace.var("rrv_number_dataset_sb_hi_"+sample+"_em_mj")
+        #nBackgroundPassHP[sample] = rrv_number_totalBackgroundHP[sample].getVal() 
+        #nBackgroundPassHPError[sample] = rrv_number_totalBackgroundHP[sample].getError() 
+        nTotalBackground += rrv_number_totalBackground[sample].getVal() 
+        if (useSideBands): 
+            nTotalBackground += rrv_number_bkg_sb_lo[sample].getVal()
+            nTotalBackground += rrv_number_bkg_sb_hi[sample].getVal()
+        nTotalBackgroundErrorSquared += rrv_number_totalBackground[sample].getError()**2
+
+    nTotalBackgroundError = nTotalBackgroundErrorSquared**0.5
+
+    return nTotalBackground, nTotalBackgroundError
+
                     
 def GetWtagScalefactors(workspace,fitter):
 
@@ -184,10 +233,78 @@ def GetWtagScalefactors(workspace,fitter):
     rrv_eff_MC_em   = workspace.var("eff_ttbar_TotalMC_em")
     rrv_mean_MC_em  = workspace.var("rrv_mean1_gaus_ttbar_TotalMC_em_mj")
     rrv_sigma_MC_em = workspace.var("rrv_sigma1_gaus_ttbar_TotalMC_em_mj")
+    #rrv_fakeRate_MC_em = workspace.var("rrv_fakeRateW_MC_em")
 
     rrv_eff_data_em   = workspace.var("eff_ttbar_data_em")
     rrv_mean_data_em  = workspace.var("rrv_mean1_gaus_ttbar_data_em_mj")
     rrv_sigma_data_em = workspace.var("rrv_sigma1_gaus_ttbar_data_em_mj")
+
+    ### Fake rate on MC 
+
+    backgrounds = ["STop", "TTbar_fakeW", "WJets", "VV"] # , "TTbar", "TTbar_realW"
+    signals = ["TTbar_realW"]
+
+    #rrv_number_dataset_signal_region = workspace.var("rrv_number_dataset_signal_region_STop_em_mj") 
+
+    rrv_number_totalBackground = {}
+    nBackgroundPass = {}
+    nBackgroundPassError = {}
+    nTotalBackground = 0 
+    nTotalBackgroundErrorSquared = 0
+    nTotalBackgroundinHP = 0 
+    nTotalBackgroundinLP = 0 
+    nTotalBackgroundinHPErrorSquared = 0
+    nTotalBackgroundinLPErrorSquared = 0
+
+    useSideBands = True
+    
+
+    for sample in backgrounds: 
+        rrv_number_totalBackground_inHP = workspace.var("rrv_number_ttbar_"+sample+"_passtau2tau1cut_em_mj") #"rrv_number_dataset_signal_region_"+sample+"_em_mj"
+        rrv_number_totalBackground_inLP = workspace.var("rrv_number_ttbar_"+sample+"_failingtau2tau1cut_em_mj") #"rrv_number_dataset_signal_region_before_cut_"+sample+"_em_mj"
+        rrv_number_totalBackground_total = workspace.var("rrv_number_ttbar_"+sample+"_beforetau2tau1cut_em_mj") #"rrv_number_ttbar_"+sample+"_extremefailtau2tau1cut_em_mj"
+        if (useSideBands): 
+            rrv_number_bkg_sb_lo = workspace.var("rrv_number_dataset_sb_lo_"+sample+"_em_mj")
+            rrv_number_bkg_sb_hi = workspace.var("rrv_number_dataset_sb_hi_"+sample+"_em_mj")
+        #nBackgroundPassHP[sample] = rrv_number_totalBackgroundHP[sample].getVal() 
+        #nBackgroundPassHPError[sample] = rrv_number_totalBackgroundHP[sample].getError() 
+        nTotalBackgroundinHP += rrv_number_totalBackground_inHP.getVal() 
+        if (useSideBands): 
+            nTotalBackgroundinHP += rrv_number_bkg_sb_lo.getVal()
+            nTotalBackground += rrv_number_bkg_sb_hi.getVal()
+        nTotalBackgroundinHPErrorSquared += rrv_number_totalBackground_inHP.getError()**2
+
+        nTotalBackgroundinLP += rrv_number_totalBackground_inLP.getVal()
+        nTotalBackgroundinLPErrorSquared += rrv_number_totalBackground_inLP.getError()**2
+
+        nTotalBackground += rrv_number_totalBackground_total.getVal()
+        nTotalBackgroundErrorSquared += rrv_number_totalBackground_total.getError()**2
+
+    nTotalBackgroundError = nTotalBackgroundErrorSquared**0.5
+    nTotalBackgroundinHPError = nTotalBackgroundinHPErrorSquared**0.5
+    nTotalBackgroundinLPError = nTotalBackgroundinLPErrorSquared**0.5
+
+    #nTotalBackgroundHP, nTotalBackgroundHPError = GetFakeRate(workspace, backgrounds, "HP")
+    #nTotalBackgroundLP, nTotalBackgroundLPError = GetFakeRate(workspace, backgrounds, "LP")
+    #nTotalBackground, nTotalBackgroundError = GetFakeRate(workspace, backgrounds, "total")
+
+    #fakeRateHP = nTotalBackgroundinHP/nTotalBackgroundinLP
+    #fakeRateLP = (nTotalBackgroundinLP - nTotalBackground)/nTotalBackgroundinLP
+
+    fakeRateHP = nTotalBackgroundinHP/nTotalBackground
+    fakeRateLP = (nTotalBackgroundinLP + nTotalBackgroundinHP)/nTotalBackground
+
+    fakeRateHPError = fakeRateHP * (nTotalBackgroundinHPErrorSquared/(nTotalBackgroundinHP**2) + nTotalBackgroundErrorSquared/(nTotalBackground**2))**0.5
+    fakeRateLPError = fakeRateLP * ((nTotalBackgroundinLPErrorSquared+nTotalBackgroundinHPErrorSquared)/((nTotalBackgroundinLP+nTotalBackgroundinHP)**2) + nTotalBackgroundErrorSquared/(nTotalBackground**2))**0.5
+
+    print "Total background in HP category: {} +/-  {} events".format(nTotalBackgroundinHP, nTotalBackgroundinHPError)
+
+    print "Total background in LP category: {} +/-  {} events".format(nTotalBackgroundinLP, nTotalBackgroundinLPError)
+
+    print "Total background total category: {} +/-  {} events".format(nTotalBackground, nTotalBackgroundError)
+
+    print "Fake rate: {} +/- {} (HP), {} +/- {} (LP)".format(fakeRateHP, fakeRateHPError, fakeRateLP, fakeRateLPError)
+    
 
     ## GET HP SCALEFACTOR AND UNCERTIANTIES
     wtagger_sf_em             = rrv_eff_data_em.getVal()/rrv_eff_MC_em.getVal()
@@ -254,6 +371,7 @@ def GetWtagScalefactors(workspace,fitter):
     print " #sigma          %0.3f +/- %0.3f      %0.3f +/- %0.3f      %0.3f +/- %0.3f" %(rrv_sigma_data_em.getVal(),rrv_sigma_data_em.getError(),rrv_sigma_MC_em.getVal(),rrv_sigma_MC_em.getError(), rrv_sigma_data_em.getVal()/rrv_sigma_MC_em.getVal(),  sigma_sf_error)
     print ""
     print "HP W-tag eff+SF  %0.3f +/- %0.3f      %0.3f +/- %0.3f      %0.3f +/- %0.3f" %(rrv_eff_data_em.getVal(),rrv_eff_data_em.getError(),rrv_eff_MC_em.getVal(),rrv_eff_MC_em.getError()        , rrv_eff_data_em.getVal()/rrv_eff_MC_em.getVal()    ,  eff_sf_error)
+    print "HP W-tag fake R.        -             %0.3f +/- %0.3f             -       " %(fakeRateHP, fakeRateHPError)
     # print "--------------------------------------------------------------------------------------------"
    #  print "                                        EXTREME FAIL                                        "
    #  print "--------------------------------------------------------------------------------------------"
@@ -265,6 +383,7 @@ def GetWtagScalefactors(workspace,fitter):
     print "Parameter                               Data              Simulation         Data/Simulation"
     # print "LP W-tag eff+SF ( w/ext fail)      %0.3f +/- %0.3f      %0.3f +/- %0.3f      %0.3f +/- %0.3f" %(eff_data_em_LP,eff_data_em_LP_err,eff_MC_em_LP,eff_MC_em_LP_err,wtagger_sf_em_LP,wtagger_sf_em_LP_err)
     print "LP W-tag eff+SF (wo/ext fail)      %0.3f +/- %0.3f      %0.3f +/- %0.3f      %0.3f +/- %0.3f" %(tmpq_eff_data_em_LP,tmpq_eff_data_em_LP_err,tmpq_eff_MC_em_LP,tmpq_eff_MC_em_LP_err,pureq_wtagger_sf_em_LP,pureq_wtagger_sf_em_LP_err)
+    print "LP W-tag fake rate                        -             {0:.3f} +/- {0:.3f}             -       ".format(fakeRateLP, fakeRateLPError)
     print "--------------------------------------------------------------------------------------------"
     print "--------------------------------------------------------------------------------------------"
     print ""; print "";
@@ -696,7 +815,7 @@ class initialiseFits:
       
       
       
-      self.file_Directory       = "/scratch/zucchett/Ntuple/WSF/v5/"
+      self.file_Directory       = "/eos/cms/store/group/phys_jetmet/mhuwiler/WSFnanoAODtuples/"
       self.list_file_data       = ["SingleMuon-Run2018A.root", "SingleMuon-Run2018B.root", "SingleMuon-Run2018C.root", "SingleMuon-Run2018D.root"]
       self.list_file_TTbar_mc   = ["TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8.root", "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8.root"]
       if options.topShower: self.list_file_TTbar_mc   = ["TT_TuneCH3_13TeV-powheg-herwig7.root"]
@@ -942,17 +1061,17 @@ class initialiseFits:
       # Mj dataset before tau2tau1 cut : Passed
       rdataset_mj     = RooDataSet("rdataset"     +label+"_"+self.channel+"_mj","rdataset"    +label+"_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
       rdataset4fit_mj = RooDataSet("rdataset4fit" +label+"_"+self.channel+"_mj","rdataset4fit"+label+"_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
-      # rrv_number_pass = RooRealVar("rrv_number_ttbar"+label+"_passtau2tau1cut_em_mj","rrv_number_ttbar"+label+"_passtau2tau1cut_em_mj",0.,10000000.) #LUCA
+      rrv_number_pass = RooRealVar("rrv_number_ttbar"+label+"_passtau2tau1cut_em_mj","rrv_number_ttbar"+label+"_passtau2tau1cut_em_mj",0.,10000000.) #LUCA
   
       # Mj dataset before tau2tau1 cut : Total
       rdataset_beforetau2tau1cut_mj     = RooDataSet("rdataset"     +label+"_beforetau2tau1cut_"+self.channel+"_mj","rdataset"    +label+"_beforetau2tau1cut_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
       rdataset4fit_beforetau2tau1cut_mj = RooDataSet("rdataset4fit" +label+"_beforetau2tau1cut_"+self.channel+"_mj","rdataset4fit"+label+"_beforetau2tau1cut_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
-      # rrv_number_before = RooRealVar("rrv_number_ttbar"+label+"_beforetau2tau1cut_em_mj","rrv_number_ttbar"+label+"_beforetau2tau1cut_em_mj",0.,10000000.) #LUCA
+      rrv_number_before = RooRealVar("rrv_number_ttbar"+label+"_beforetau2tau1cut_em_mj","rrv_number_ttbar"+label+"_beforetau2tau1cut_em_mj",0.,10000000.) #LUCA
  
       ### Mj dataset failed tau2tau1 cut :
       rdataset_failtau2tau1cut_mj     = RooDataSet("rdataset"     +label+"_failtau2tau1cut_"+self.channel+"_mj","rdataset"    +label+"_failtau2tau1cut_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
       rdataset4fit_failtau2tau1cut_mj = RooDataSet("rdataset4fit" +label+"_failtau2tau1cut_"+self.channel+"_mj","rdataset4fit"+label+"_failtau2tau1cut_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
-      # rrv_number_fail = RooRealVar("rrv_number_ttbar"+label+"_failingtau2tau1cut_em_mj","rrv_number_ttbar"+label+"_failingtau2tau1cut_em_mj",0.,10000000.) #LUCA
+      rrv_number_fail = RooRealVar("rrv_number_ttbar"+label+"_failingtau2tau1cut_em_mj","rrv_number_ttbar"+label+"_failingtau2tau1cut_em_mj",0.,10000000.) #LUCA
 
       ### Mj dataset extreme failed tau2tau1 cut: > 0.75
       rdataset_extremefailtau2tau1cut_mj     = RooDataSet("rdataset"    +label+"_extremefailtau2tau1cut_"+self.channel+"_mj","rdataset"     +label+"_extremefailtau2tau1cut_"+self.channel+"_mj",RooArgSet(rrv_mass_j,rrv_weight),RooFit.WeightVar(rrv_weight) )
@@ -994,6 +1113,9 @@ class initialiseFits:
       SF = 1.0
 #      if label.find("QCD")!=-1: 
 #          SF = 0.697187387981
+      NumHp = 0; 
+      NumLp = 0; 
+      NumTotal = 0; 
       
       for i in range(treeIn.GetEntries()):
           if i % 5000 == 0: print "iEntry: ",i
@@ -1027,10 +1149,13 @@ class initialiseFits:
           discriminantCut = 0
           if wtagger <= options.tau2tau1cutHP: # HP
               discriminantCut = 2
+              #NumHp +=1
           elif wtagger > options.tau2tau1cutHP and wtagger <= options.tau2tau1cutLP: #LP
               discriminantCut = 1
+              NumLp +=1
           elif wtagger > options.tau2tau1cutLP: # Extreme fail
               discriminantCut = 0
+          NumTotal +=1
 
           tmp_jet_mass = getattr(treeIn, jet_mass);
           treeWeight = treeIn.GetWeight()
@@ -1089,9 +1214,10 @@ class initialiseFits:
              
              category_p_f.setLabel("pass")
              combData_p_f.add(RooArgSet(rrv_mass_j,category_p_f),tmp_event_weight)
+             NumHp +=1
           
           # TOTAL category (no Tau21 )
-          if discriminantCut == 2 or discriminantCut == 1 or discriminantCut == 0 and (rrv_mass_j.getMin() < tmp_jet_mass < rrv_mass_j.getMax()):   
+          if (discriminantCut == 2 or discriminantCut == 1 or discriminantCut == 0) and (rrv_mass_j.getMin() < tmp_jet_mass < rrv_mass_j.getMax()):   
 
               rrv_mass_j.setVal(tmp_jet_mass)
 
@@ -1127,14 +1253,14 @@ class initialiseFits:
       getattr(self.workspace4fit_,"import")(rrv_scale_to_lumi_failtau2tau1cut)
       getattr(self.workspace4fit_,"import")(rrv_scale_to_lumi_extremefailtau2tau1cut)
         
-      # rrv_number_pass.setVal(rdataset_mj.sumEntries())
- #      rrv_number_pass.setError(TMath.Sqrt(rdataset_mj.sumEntries()))
+      rrv_number_pass.setVal(rdataset_mj.sumEntries())
+      rrv_number_pass.setError(TMath.Sqrt(rdataset_mj.sumEntries()))
  #      # rrv_number_pass.Print()
- #      rrv_number_before.setVal(rdataset_beforetau2tau1cut_mj.sumEntries())
- #      rrv_number_before.setError(TMath.Sqrt(rdataset_beforetau2tau1cut_mj.sumEntries()))
+      rrv_number_before.setVal(rdataset_beforetau2tau1cut_mj.sumEntries())
+      rrv_number_before.setError(TMath.Sqrt(rdataset_beforetau2tau1cut_mj.sumEntries()))
  #      # rrv_number_before.Print()
- #      rrv_number_fail.setVal(rdataset_failtau2tau1cut_mj.sumEntries())
- #      rrv_number_fail.setError(TMath.Sqrt(rdataset_failtau2tau1cut_mj.sumEntries()))
+      rrv_number_fail.setVal(rdataset_failtau2tau1cut_mj.sumEntries())
+      rrv_number_fail.setError(TMath.Sqrt(rdataset_failtau2tau1cut_mj.sumEntries()))
  #      # rrv_number_fail.Print()
       rrv_number_extremefail.setVal(rdataset_extremefailtau2tau1cut_mj.sumEntries())
       rrv_number_extremefail.setError(TMath.Sqrt(rdataset_extremefailtau2tau1cut_mj.sumEntries()))
@@ -1142,9 +1268,9 @@ class initialiseFits:
 
 #      rrv_number_extremefail.Print()
  #
-      # getattr(self.workspace4fit_,"import")(rrv_number_pass)
-    #   getattr(self.workspace4fit_,"import")(rrv_number_before)
-    #   getattr(self.workspace4fit_,"import")(rrv_number_fail)
+      getattr(self.workspace4fit_,"import")(rrv_number_pass)
+      getattr(self.workspace4fit_,"import")(rrv_number_before)
+      getattr(self.workspace4fit_,"import")(rrv_number_fail)
       
 
       #prepare m_j dataset
@@ -1155,6 +1281,8 @@ class initialiseFits:
       rrv_number_dataset_signal_region_before_cut_mj        = RooRealVar("rrv_number_dataset_signal_region_before_cut"        +label+"_"+self.channel+"_mj","rrv_number_dataset_signal_region_before_cut"       +label+"_"+self.channel+"_mj",hnum_4region_before_cut.GetBinContent(2))
       rrv_number_dataset_signal_region_before_cut_error2_mj = RooRealVar("rrv_number_dataset_signal_region_before_cut_error2" +label+"_"+self.channel+"_mj","rrv_number_dataset_signal_region_before_cut_error2"+label+"_"+self.channel+"_mj",hnum_4region_before_cut_error2.GetBinContent(2))
       rrv_number_dataset_sb_hi_mj                           = RooRealVar("rrv_number_dataset_sb_hi"                           +label+"_"+self.channel+"_mj","rrv_number_dataset_sb_hi"                          +label+"_"+self.channel+"_mj",hnum_4region.GetBinContent(3))
+
+      rrv_number_dataset_signal_region_extremefailtau2tau1cut_mj = RooRealVar("rrv_number_dataset_signal_region_before_cut"+label+"_"+self.channel+"_mj","rrv_number_dataset_signal_region_before_cut" +label+"_"+self.channel+"_mj",rdataset_extremefailtau2tau1cut_mj.sumEntries())
 
       getattr(self.workspace4fit_,"import")(rrv_number_dataset_sb_lo_mj)
       getattr(self.workspace4fit_,"import")(rrv_number_dataset_signal_region_mj)
