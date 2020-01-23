@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import division, print_function
+
 
 patternsData  = [
   "/SingleMuon/Run2018A-Nano1June2019-v1/NANOAOD",
@@ -65,9 +67,9 @@ def getDataset(description):
 		if description.find("mc")!=-1:    patterns = patternsTT+patternsST+patternsVV+patternsWJets+patternsQCD
 		if description.find("all")!=-1:   patterns = patternsTT+patternsST+patternsVV+patternsWJets+patternsQCD+patternsData
 
-		print "Dataset: Using datasets: ", patterns	
+		print("Dataset: Using datasets: ", patterns)	
 
 	else: 
-		print "Dataset: No dataset was specified!\n Please specify which dataset to process (e.g. {TT, ST, VV, WJets, QCD, mc, data, all})! "	
+		print("Dataset: No dataset was specified!\n Please specify which dataset to process (e.g. {TT, ST, VV, WJets, QCD, mc, data, all})! ")
 
 	return patterns
