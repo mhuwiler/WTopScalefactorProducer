@@ -8,6 +8,7 @@ class GridBackend(object):
 	def __init__(self, jobconfig): 
 		print "Constructor of GridBackend class"
 		self.verbose = jobconfig.verbose
+		self.xrdprefix = "root://cms-xrd-global.cern.ch/"
 	def PrepareJobs(self, params): 
 		#Do some stuff 
 		print "Do some stuff"
@@ -34,12 +35,14 @@ class HTCondorBackend(GridBackend):
 class SlurmBackend(GridBackend): 
 	def __init__(self, jobconfig):
 		super(SlurmBackend, self).__init__(jobconfig)
-		self.xrdprefix = "root://cms-xrd-global.cern.ch/"
 		self.exename = "python qsub_script_SFs.py"
 		self.submitdir = "./submit"
 		self.outfolder = "./output"
+		self.submitfilename = "submitfileslibrary/SlurmSubmit.sh"
 		if (not os.path.isdir(self.submitdir)): 
 			os.mkdir(self.submitdir)
+		if (not os.path.isdir(self.outfolder)): 
+			os.mkdir(self.outfolder)
 
 	def PrepareJobs(self, dataset, multiplicity): 
 		for key, files in dataset.items(): 
@@ -59,6 +62,19 @@ class SlurmBackend(GridBackend):
 				self.createJob(argfile, filelist, self.outfolder, key, len(filelists))
 
 			argfile.close()
+
+	def SubmitJobs(self, dataset): 
+		for key, files in dataset.items(): 
+			if self.verbose and False: 
+				print "Going to launch jobs for dataset: \n\nkey: {}\nfiles:{}".format(key, files)
+
+			argfilename = self.submitdir+"joblist_"+key
+			submitcommand = 'sbatch {} {}'.format(self.submitfilename, argfilename)
+			# submitcommand = 'sbatch --array=1-{} {} {}'.format(self.submitfilename, argfilename)
+			print "Gonna submit a job with: {}".format(submitcommand)
+
+			#os.system(submitcommand)
+
 
 	def createJob(self, argfile, filelist, outfolder, name, nchunks): 
 		cmd = self.generateJobCommand(filelist, outfolder, name, nchunks)

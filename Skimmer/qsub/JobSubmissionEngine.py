@@ -56,6 +56,7 @@ class JobSubmissionEngine:
 			exit(0)
 
 		self.PrepareJobs(catalogue, self.jobconfigfilename)
+		self.jobengine.SubmitJobs(self.getFileList(catalogue))
 
 		#self.jobengine.WriteJobConfig(0)
 
