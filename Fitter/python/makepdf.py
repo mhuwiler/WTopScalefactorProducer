@@ -483,7 +483,7 @@ def MakeGeneralPdf(workspace,label,model,spectrum,wtagger_label, channel,constra
             model_pdf   = RooGaussian("model_pdf"+label+"_"+channel+spectrum,"model_pdf"+label+"_"+channel+spectrum, rrv_x, rrv_mean1_gaus, rrv_sigma1_gaus)
     
     if model == "ErfExp_ttbar" or model == "ErfExp_ttbar_ddt" or model == "ErfExp_ttbar_failtau2tau1cut" or model == "ErfExp_ttbar_failtau2tau1cut_fitMC" or model == "ErfExp_ttbar_failtau2tau1cut_ddt" or model == "ErfExp_ttbar_fitMC":
-        rrv_offset_ErfExp = RooRealVar("rrv_offset_ErfExp"+label+"_"+channel+spectrum ,"rrv_offset_ErfExp"+label+"_"+channel+spectrum, 90, 10, 200) # 90, 10, 200
+        rrv_offset_ErfExp = RooRealVar("rrv_offset_ErfExp"+label+"_"+channel+spectrum ,"rrv_offset_ErfExp"+label+"_"+channel+spectrum, 20, -100, 200) # 90, 10, 200
         rrv_width_ErfExp  = RooRealVar("rrv_width_ErfExp" +label+"_"+channel+spectrum ,"rrv_width_ErfExp" +label+"_"+channel+spectrum, 40, 25, 300) # 40, 25, 100
         rrv_c_ErfExp  = RooRealVar("rrv_c_ErfExp"  +label+"_"+channel+spectrum ,"rrv_c_ErfExp"     +label+"_"+channel+spectrum, -0.03, -1., 0.) # -0.04, -1, 0.
         model_pdf     = ROOT.RooErfExpPdf("model_pdf"+label+"_"+channel+spectrum,"model_pdf"+label+"_"+channel+spectrum ,rrv_x,rrv_c_ErfExp,rrv_offset_ErfExp,rrv_width_ErfExp)
