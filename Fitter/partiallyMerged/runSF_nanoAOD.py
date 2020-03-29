@@ -1174,6 +1174,29 @@ class initialiseFits:
       getattr(self.workspace4fit_,"import")(rdataset4fit_extremefailtau2tau1cut_mj)
       
 
+#from __future__ import print_function
+def tracefunc(frame, event, arg, indent=[0], displayOnReturn=False):
+      excluded = ["__call__", "__init__", "__getattr2", "_importhook", "cleanup", "_remove", "_run_exitfuncs"] # vetoing frequent python functions from being output 
+      funcname = frame.f_code.co_name
+      arguments = frame.f_code.co_varnames  #co_argcount
+#      for i in arguments: 
+#        sys.stderr.write(i)
+#        sys.stderr.write(" ")
+#      sys.stderr.write(" \n")
+      if event == "call":
+          indent[0] += 2
+          if funcname not in excluded: 
+             sys.stderr.write("-" * indent[0] + "> call function {}()\n".format(funcname)) #print("-" * indent[0] + "> call function", funcname, file=sys.stderr)
+             sys.stderr.write(" " * indent[0])
+             #sys.stderr.write(arguments)
+      elif event == "return":
+          if funcname not in excluded and displayOnReturn: 
+             sys.stderr.write("<" + "-" * indent[0] + "exit function {}()\n".format(funcname))
+          indent[0] -= 2
+      return tracefunc
+
+sys.setprofile(tracefunc)
+
 ### Start  main
 if __name__ == '__main__':
     channel = options.channel ## ele, mu or ele+mu combined
