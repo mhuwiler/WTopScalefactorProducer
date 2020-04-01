@@ -9,9 +9,10 @@ import DASTools
 
 
 def WriteJobConfigFile(filename, dataset, queue, multiplicity, maxtime, sepath, scratchpath="/scratch"): 
-    with open("./lib/template.conf", "r") as template: 
+    with open("./etc/template.conf", "r") as template: 
         configfile = open(filename+".conf", 'w')
         workdir = "./"+filename+"_GCwork"
+        
         datasettext=""
         for line in dataset: 
         	datasettext+=("\t"+line+"\n")

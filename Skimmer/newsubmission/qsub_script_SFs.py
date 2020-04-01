@@ -2,21 +2,17 @@
 import os,sys
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from WTopScalefactorProducer.Skimmer.skimmer import Skimmer
-if len(sys.argv)>1:
-   infile = sys.argv[1].split(',')
-else:
-   infile = ["root://cms-xrd-global.cern.ch//store/user/asparker/TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8/TTToSemiLeptonicTuneCP5PSweights13TeV-powheg-pythia8/180130_175206/0000/80XNanoV0-muSkim_1.root"]
-  #infile = ["SingleMuon.root"]
+if len(sys.argv)<2:
+  sys.stderr.write("ERROR: There are too few arguments. The script needs the following arguments: 1. output directory, 2. list of source files") 
 
-if len(sys.argv)>2:
-	 outputDir = os.path.expandvars(sys.argv[2])
-else:
-	outputDir = os.path.expandvars("$GC_SCRATCH")  #"TEST"	
+outputDir = os.path.expandvars(sys.argv[1]) #outputDir = os.path.expandvars("$GC_SCRATCH")
 
-outputDir= os.path.expandvars("$GC_SCRATCH")
+infile = sys.argv[2].split(' ')
 
-print sys.argv
 
+print "argv: ", sys.argv
+
+print "infile: ", infile
 
 print "outputDir: ", outputDir
 
