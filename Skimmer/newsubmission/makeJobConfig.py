@@ -8,10 +8,9 @@ import Dataset
 import DASTools
 
 
-def WriteJobConfigFile(filename, dataset, queue, multiplicity, maxtime, sepath, scratchpath="/scratch"): 
+def WriteJobConfigFile(filename, workdir, dataset, queue, multiplicity, maxtime, sepath, scratchpath="/scratch"): 
     with open("./etc/template.conf", "r") as template: 
-        configfile = open(filename+".conf", 'w')
-        workdir = "./"+filename+"_GCwork"
+        configfile = open(filename, 'w')
         
         datasettext=""
         for line in dataset: 
@@ -50,15 +49,24 @@ if __name__ == "__main__":
 
    #args.descriptor = "TT" # choose in [TT, ST, VV, WJets, QCD, mc, data, all]
 
+   datasetdir = args.outdir+"_dataset"
+   configfile = args.outdir+".conf"
+   workdir = args.outdir+"_GCwork"
+
    for dataset in Dataset.getDataset(args.descriptor): 
-        datasetfiles.append(DASTools.GenerateGCDatasetFiles(dataset, args.outdir))
+        datasetfiles.append(DASTools.GenerateGCDatasetFiles(dataset, datasetdir))
 
    # print datasetfiles
 
    os.system(". ./makeEnv.sh")	# Droping the environment variables into a file for GC 
 
 
-   WriteJobConfigFile(args.outdir, datasetfiles, "wn", 10, 8, "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch")
+   WriteJobConfigFile(configfile, workdir, datasetfiles, "wn", 10, 8, "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch")
+
+   cmd = "go.py {} -cG".format(configfile)
+   if not args.dry: os.system(cmd)
+
+   print cmd
 
 
 
