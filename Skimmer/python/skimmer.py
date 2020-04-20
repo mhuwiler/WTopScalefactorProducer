@@ -113,6 +113,7 @@ class Skimmer(Module):
          self.out.branch("genmatchedAK8",  "I")
          self.out.branch("genmatchedAK8Quarks",  "I")
          self.out.branch("genmatchedAK8Subjet",  "I")
+         self.out.branch("genmatchedAK82017",  "I")
          self.out.branch("AK8Subjet0isMoreMassive",  "I")
          self.out.branch("passedMETfilters",  "I")
          self.out.branch("lheweight",  "F")
@@ -263,10 +264,10 @@ class Skimmer(Module):
         
         # Find fat jet
         FatJets = list(Collection(event, "FatJet"))
-        recoAK8 = [ x for x in FatJets ] # if x.p4().Perp() > self.minJetPt and  abs(x.p4().Eta()) < self.maxJetEta and x.msoftdrop > 30. and x.tau1 > 0. and x.tau2 > 0.]
+        recoAK8 = [ x for x in FatJets if x.p4().Perp() > self.minJetPt and  abs(x.p4().Eta()) < self.maxJetEta and x.msoftdrop > 30. and x.tau1 > 0. and x.tau2 > 0.]
 #        recoAK8.sort(key=lambda x:x.msoftdrop,reverse=True)
         recoAK8.sort(key=lambda x:x.pt,reverse=True)
-        if not len(recoAK8) > 0 or not recoAK8[0].pt > 200. or not abs(recoAK8[0].eta) < 2.5: return False
+        if not len(recoAK8) > 0: return False
 
         jetAK8_4v = ROOT.TLorentzVector()
         #jetAK8_4v.SetPtEtaPhiM(recoAK8[0].pt,recoAK8[0].eta,recoAK8[0].phi,recoAK8[0].mass)
@@ -331,7 +332,7 @@ class Skimmer(Module):
 
             TWdaus =  [x for x in gens if x.pt>1 and  0<abs(x.pdgId)<4]
             Tdaus =  [x for x in gens if x.pt>1 and (abs(x.pdgId)==5  or  abs(x.pdgId)==24 )]
-            Tmoms =  [x for x in gens if x.pt>1 and abs(x.pdgId)==6]
+            Tmoms =  [x for x in gens if x.pt>10 and abs(x.pdgId)==6] 
             Top =  [x for x in gens if x.pdgId==6]
             AntiTop =  [x for x in gens if x.pdgId==-6]
             
@@ -348,7 +349,7 @@ class Skimmer(Module):
               for dau in Wdaus:
                 for mom in Wmoms:
                   try:
-                    if mom == Wmoms[dau.genPartIdxMother]: 
+                    if mom == gens[dau.genPartIdxMother]: 
                       realVs.append(mom)
                       realVdaus.append(dau)    
                   except:
@@ -359,7 +360,7 @@ class Skimmer(Module):
                 for dau in Tdaus:
                   for mom in Tmoms:
                     try:
-                      if mom == Tmoms[dau.genPartIdxMother] and dau == Tdaus[gdau.genPartIdxMother]: 
+                      if mom == gens[dau.genPartIdxMother] and dau == gens[gdau.genPartIdxMother]: 
                         realTs.append(mom)
                         realWs.append(dau)
                         realqs.append(gdau)    
@@ -376,10 +377,28 @@ class Skimmer(Module):
         #for partially merged:
         self.isW = 0
         self.isWqq = 0
+        self.isW2017 = 0
         if isMC == False:
             genjets = [None] * len(recoAK8)
 
         else :
+          # legacy 2017 gen matching 
+          for V in realVs:
+            gen_4v = ROOT.TLorentzVector()
+            gen_4v.SetPtEtaPhiM(V.pt,V.eta,V.phi,V.mass)
+            dR = jetAK8_4v.DeltaR(gen_4v)
+            if dR < 0.8: 
+              nDau = 0
+              for v in realVdaus:
+                gen_4v = ROOT.TLorentzVector()
+                gen_4v.SetPtEtaPhiM(v.pt,v.eta,v.phi,v.mass)
+                dR = jetAK8_4v.DeltaR(gen_4v)
+                if dR < 0.8: 
+                  nDau +=1                 
+              if nDau >1: self.isW2017 = 1
+              else: self.isW2017 = 0
+
+          
           # simple gen matching
           for V in Wmoms:
             gen_4v = ROOT.TLorentzVector()
@@ -402,7 +421,7 @@ class Skimmer(Module):
                 if dR < 0.8: 
                   nDau +=1                 
                   self.isWqq = 1
-
+          
        
         #for fully merged:
         self.SJ0isW = -1
@@ -443,6 +462,7 @@ class Skimmer(Module):
         # now fill branches
         self.out.fillBranch("genmatchedAK8",  self.isW)
         self.out.fillBranch("genmatchedAK8Quarks",  self.isWqq)
+        self.out.fillBranch("genmatchedAK82017",  self.isW2017)
         self.out.fillBranch("genmatchedAK8Subjet", self.matchedSJ)
         self.out.fillBranch("AK8Subjet0isMoreMassive", self.SJ0isW )
         self.out.fillBranch("puweight", puweight )

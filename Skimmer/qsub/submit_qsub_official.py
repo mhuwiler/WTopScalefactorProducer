@@ -89,6 +89,7 @@ if __name__ == "__main__":
 
 
   gridengine = args.gridengine #"HTCondor" #"HTCondor", "SGD"
+
   out = "Skimmed_%s/"%timestamp
   
   if gridengine=="SGD": 

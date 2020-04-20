@@ -696,7 +696,7 @@ class initialiseFits:
       
       
       
-      self.file_Directory       = "/scratch/zucchett/Ntuple/WSF/v5/"
+      self.file_Directory       = "/work/mhuwiler/data/WScaleFactors/Mergeddefinition2017/"
       self.list_file_data       = ["SingleMuon-Run2018A.root", "SingleMuon-Run2018B.root", "SingleMuon-Run2018C.root", "SingleMuon-Run2018D.root"]
       self.list_file_TTbar_mc   = ["TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8.root", "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8.root"]
       if options.topShower: self.list_file_TTbar_mc   = ["TT_TuneCH3_13TeV-powheg-herwig7.root"]
@@ -1016,8 +1016,8 @@ class initialiseFits:
 #          except:
 #            print "WARNING: no genmatchedAK8 in tree", treeIn.GetName()
           
-          if TString(label).Contains("realW") and not treeIn.genmatchedAK8: continue
-          if TString(label).Contains("fakeW") and treeIn.genmatchedAK8: continue
+          if TString(label).Contains("realW") and not treeIn.genmatchedAK82017: continue
+          if TString(label).Contains("fakeW") and treeIn.genmatchedAK82017: continue
           
           if options.tagger.find("ddt")==-1 and options.tagger.find("DDT")==-1: 
               wtagger = getattr(treeIn,options.tagger)
@@ -1091,7 +1091,7 @@ class initialiseFits:
              combData_p_f.add(RooArgSet(rrv_mass_j,category_p_f),tmp_event_weight)
           
           # TOTAL category (no Tau21 )
-          if (discriminantCut == 2 or discriminantCut == 1 or discriminantCut == 0) and (rrv_mass_j.getMin() < tmp_jet_mass < rrv_mass_j.getMax())
+          if (discriminantCut == 2 or discriminantCut == 1 or discriminantCut == 0) and (rrv_mass_j.getMin() < tmp_jet_mass < rrv_mass_j.getMax()): 
               rrv_mass_j.setVal(tmp_jet_mass)
 
               if tmp_jet_mass >= self.mj_signal_min and tmp_jet_mass <self.mj_signal_max :
