@@ -264,10 +264,12 @@ class Skimmer(Module):
         
         # Find fat jet
         FatJets = list(Collection(event, "FatJet"))
-        recoAK8 = [ x for x in FatJets if x.p4().Perp() > self.minJetPt and  abs(x.p4().Eta()) < self.maxJetEta and x.msoftdrop > 30. and x.tau1 > 0. and x.tau2 > 0.]
+        recoAK8 = [ x for x in FatJets ]
+        #recoAK8 = [ x for x in FatJets if x.p4().Perp() > self.minJetPt and  abs(x.p4().Eta()) < self.maxJetEta and x.msoftdrop > 30. and x.tau1 > 0. and x.tau2 > 0.]
 #        recoAK8.sort(key=lambda x:x.msoftdrop,reverse=True)
         recoAK8.sort(key=lambda x:x.pt,reverse=True)
-        if not len(recoAK8) > 0: return False
+        #if not len(recoAK8) > 0: return False
+        if not len(recoAK8) > 0 or not recoAK8[0].pt > 200. or not abs(recoAK8[0].eta) < 2.5: return False
 
         jetAK8_4v = ROOT.TLorentzVector()
         #jetAK8_4v.SetPtEtaPhiM(recoAK8[0].pt,recoAK8[0].eta,recoAK8[0].phi,recoAK8[0].mass)
