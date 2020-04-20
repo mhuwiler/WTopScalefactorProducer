@@ -3,12 +3,12 @@
 echo $FILE_NAMES
 
 env
-cmsenv
 
 python $CMSSW_BASE/src/WTopScalefactorProducer/Skimmer/newsubmission/ProductionScript.py "$GC_SCRATCH" "$FILE_NAMES" 
 
 # Additional manual copying of file for safety
-destinationpath=/scratch/mhuwiler/Wtagging/production/${GC_TASK_ID}/${DATASETPATH}/
+# /scratch/mhuwiler/Wtagging/production/${GC_TASK_ID}/${DATASETPATH}/
+destinationpath=/work/mhuwiler/data/WScaleFactors/production/${GC_TASK_ID}/${DATASETPATH}/
 
 mkdir -p $destinationpath
 
