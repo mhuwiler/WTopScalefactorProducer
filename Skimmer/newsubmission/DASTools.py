@@ -124,7 +124,7 @@ def GenerateGCDatasetFiles(DASName, output, prefix="root://cms-xrd-global.cern.c
     for j in allJSONs:
         outputLines.append(prefix+str(j["file"][0]["name"])+" = "+str(j["file"][0]["nevents"]))
 
-    datasetname = DASName.split("/")[1] if overwritename is None else overwritename
+    datasetname = DASName.split("/")[1]+DASName.split("/")[2] if overwritename is None else overwritename # TODO: shere we take the sample name and the version, because for data the run (A, B, C, D) is in the version
 
     # Make folder to write the GC conf file 
     if not os.path.exists(output):

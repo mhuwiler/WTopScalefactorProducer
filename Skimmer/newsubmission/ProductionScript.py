@@ -2,6 +2,9 @@
 import os,sys
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import * 
 from WTopScalefactorProducer.Skimmer.skimmer import Skimmer
+import time
+import pickle
+import glob
 if len(sys.argv)<2:
   sys.stderr.write("ERROR: There are too few arguments. The script needs the following arguments: 1. output directory, 2. list of source files") 
 
@@ -16,9 +19,12 @@ print "infile: ", infile
 
 print "outputDir: ", outputDir
 
+writetimingfile = True
+
 # HLT_Mu50&&nMuon>0&&Muon_pt[0]>55.&&Muon_pfRelIso03_chg[0]<0.15&&Muon_highPtId>1&&nFatJet>0&&FatJet_pt>200
 
 jsonfile=os.path.expandvars('$CMSSW_BASE/src/WTopScalefactorProducer/Skimmer/python/JSON/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt')
+
 
 if infile[0].find("SingleMuon")!=-1:
   channel = "mu"
@@ -43,7 +49,75 @@ else:
                     modules=[Skimmer(channel)],provenance=False,fwkJobReport=False,  
                     #jsonInput=jsonfile,
 )
+
+start = time.time()
 p.run()
+#time.sleep(5)
+endpostprocessing = time.time()
+
 #os.system("xrdcp root://eosuser.cern.ch//eos/user/m/mhuwiler/data/Wtagging/prodexample/8C2AE8D3-E2DA-524D-9F98-05FEA3DF3063_Skim.root {} ; xrdcp root://eosuser.cern.ch//eos/user/m/mhuwiler/data/Wtagging/prodexample/BB978C6D-1770-CB42-A45E-AFAA249DAA82_Skim.root {} ".format(outputDir, outputDir))
-os.system("haddnano.py {}/out.root {}/*Skim.root".format(outputDir, outputDir))
-print "DONE"
+
+
+os.popen("haddnano.py {}/out.root {}/*Skim.root".format(outputDir, outputDir)).read()
+endhadd = time.time()
+
+# Computing time 
+processingtime = endpostprocessing - start
+haddtime = endhadd - endpostprocessing
+
+print "Pocessing time:", processingtime
+print "Hadd time:", haddtime
+
+# Quality test: 
+sanitycheck = []
+allgood = True
+numEntries = 0
+sumNumEntries = 0 
+addedNumEntries = -1
+for filename in glob.glob(outputDir+"/*.root"): 
+  #filename = os.path.expandvars(outputDir)+"/"+filename
+  isOpen = False
+  isValid = False
+  treeFilled = False
+  isFile = os.path.isfile(filename)
+  if isFile: 
+    file = ROOT.TFile(filename, "r")
+    isOpen = file.IsOpen()
+    if isOpen: 
+      isValid = (file.GetListOfKeys().Contains("Runs") and file.GetListOfKeys().Contains("Events"))
+            
+      if isValid: 
+        tree = file.Get("Events")
+        treeFilled = (tree.GetEntries() > 1)
+        numEntries = tree.GetEntries()
+        if (filename.find("out.root") != -1): 
+          addedNumEntries = numEntries
+        else: 
+          sumNumEntries += numEntries
+    file.Close()
+
+  isBroken = not (isFile and isOpen and isValid and treeFilled)
+  allgood = allgood and not isBroken
+  sanitycheck.append([filename, int(isFile), int(isOpen), int(isValid), int(treeFilled), int(isBroken), numEntries])
+
+print sanitycheck
+print "All files valid and filled:", allgood 
+entriesmatch = False
+if (sumNumEntries == addedNumEntries): 
+  print "The number of entries in the hadded file corresponds to the sum of entries in individual files. "
+  entriesmatch = True
+else: 
+  print "ERROR: The number of entries in the added file does not match the number of entries in the processed files! "
+
+print "Number of entries in the pricessed files (sum): ", sumNumEntries, "Number of entries in the added file: ", addedNumEntries 
+
+with open(os.path.expandvars(outputDir)+"/qualitycheck.pkl", "wb") as outputfile: 
+  pickle.dump(sanitycheck, outputfile, pickle.HIGHEST_PROTOCOL)
+
+if (writetimingfile): 
+  with open(os.path.expandvars(outputDir)+"/timing.dat", "w") as outfile: 
+    outfile.write(str(start)+","+str(endpostprocessing)+","+str(endhadd)+"\n")
+
+print "Job seems to be sucessful:", allgood and entriesmatch
+
+print "ProductionScript.py: DONE"

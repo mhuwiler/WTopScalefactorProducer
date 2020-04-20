@@ -31,14 +31,14 @@ databasename = configfile.replace(".conf", "_jobresults.csv")
 try: 
 	jobstatus = pd.read_csv(databasename, index_col=0)
 	iteration = jobstatus["Iteration"].max()+1
-	if (verbose): print "Opened existing database: ", databasename
+	if (verbose): print "Opened existing database:", databasename
 
 except: 
 	jobstatus = pd.DataFrame(columns=["OutputFileName", "isFile", "isOpen", "isValid", "treeFilled", "isBroken", "DatasetName", "JobNum", "Iteration"])
 	iteration = 1
-	if (verbose): print "Created database from scratch ", databasename
+	if (verbose): print "Created database from scratch", databasename
 
-if (verbose): print "Checking job: ", jobname, " iteration: ", iteration
+if (verbose): print "Checking job:", jobname, " iteration:", iteration
 
 # Listing the files that were written to the destination 
 listoffiles = glob.glob(readprefix+directory+jobname+directorySubStructure) # in order to use wildcards not supported in os.listdir 
@@ -48,7 +48,7 @@ listoffiles = glob.glob(readprefix+directory+jobname+directorySubStructure) # in
 alljobs = []
 failedjobs = []
 
-for filename in listoffiles[0:5]: 
+for filename in listoffiles: 
 	strippedFileName = filename.replace(readprefix, "")
 	xrdfilename = writeprefix+strippedFileName
 	datasetname = strippedFileName.split("/")[-2]
@@ -57,11 +57,11 @@ for filename in listoffiles[0:5]:
 	jobNum=int(lastChunck.replace("job_", "").replace("_out.root", ""))
 
 	if (verbose) : 
-		print "\tFilename: ", filename
-		print "\tStripped filename: ", strippedFileName
-		print "\tXROOTD file name: ", xrdfilename
-		print "\tDataset Name: ", datasetname
-		print "\tJob number: ", jobNum
+		print "\tFilename:", filename
+		print "\tStripped filename:", strippedFileName
+		print "\tXROOTD file name:", xrdfilename
+		print "\tDataset Name:", datasetname
+		print "\tJob number:", jobNum
 
 	isOpen = False
 	isValid = False
@@ -76,6 +76,7 @@ for filename in listoffiles[0:5]:
 			if isValid: 
 				tree = file.Get("Events")
 				treeFilled = (tree.GetEntries() > 1)
+		file.Close()
 
 	isBroken = not (isFile and isOpen and isValid and treeFilled)
 
@@ -89,12 +90,12 @@ for filename in listoffiles[0:5]:
 		failedjobs.append(jobNum)
 
 		rmCommand = "LD_LIBRARY_PATH='' PYTHONPATH='' gfal-rm "+xrdfilename # fixes to make gfal-rm compatible with CMSSW current version 
-		if (verbose): print "rm command: ", rmCommand
+		if (verbose): print "rm command:", rmCommand
 		if not dryrun: os.system(rmCommand)
 
 		resetCommand = "nohup go.py "+configfile+" --reset id:{} > /dev/null 2>&1 &".format(jobNum) # nohup to run it in parallel in background and setting output to null
 		#resetCommand = ["nohup go.py", configfile, "--reset", "id:{}".format(jobNum)]
-		if (verbose): print "reset command: ", resetCommand
+		if (verbose): print "reset command:", resetCommand
 		if not dryrun: os.system(resetCommand) #subprocess.Popen(resetCommand, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
@@ -103,6 +104,13 @@ print jobstatus
 jobstatus.to_csv(databasename)
 
 print failedjobs
+
+totalNumOfJobs = max(alljobs)
+print "Missing output file for jobs: "
+for index in range(0, totalNumOfJobs): 
+	if index not in alljobs: 
+		print "\tMissing output file for job:", index
+
 
 
 

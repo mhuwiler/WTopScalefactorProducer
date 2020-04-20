@@ -61,7 +61,9 @@ if __name__ == "__main__":
    os.system(". ./makeEnv.sh")	# Droping the environment variables into a file for GC 
 
 
-   WriteJobConfigFile(configfile, workdir, datasetfiles, "wn", 10, 8, "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch")
+   maxtime = args.multiplicity*4.
+
+   WriteJobConfigFile(configfile, workdir, datasetfiles, "wn", args.multiplicity, int(maxtime), "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch")
 
    cmd = "go.py {} -cG".format(configfile)
    if not args.dry: os.system(cmd)
