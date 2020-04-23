@@ -11,11 +11,11 @@ import pandas as pd
 directory = "production/Wtagging/"
 
 readprefix = "/pnfs/psi.ch/cms/trivcat/store/user/mhuwiler/" # prefix to storage element in read access 
-writeprefix = "root://t3dcachedb03.psi.ch/pnfs/psi.ch/cms/trivcat/store/user/mhuwiler/" # prefix to storage element for xrootd and gfal commands 
+writeprefix = "root://t3dcachedb03.psi.ch//pnfs/psi.ch/cms/trivcat/store/user/mhuwiler/" # prefix to storage element for xrootd and gfal commands 
 
-configfile = "production.conf"
+configfile = "productionTTnosdmasscut.conf"
 
-directorySubStructure = "/*/*" # What directory structure the job writes 
+directorySubStructure = "/*/*.root" # What directory structure the job writes 
 
 dryrun = True 
 
@@ -30,7 +30,8 @@ databasename = configfile.replace(".conf", "_jobresults.csv")
 
 try: 
 	jobstatus = pd.read_csv(databasename, index_col=0)
-	iteration = jobstatus["Iteration"].max()+1
+	iteration = jobstatus["Iteration"].max()
+        if (not dryrun): iteration+=1
 	if (verbose): print "Opened existing database:", databasename
 
 except: 
@@ -68,7 +69,7 @@ for filename in listoffiles:
 	treeFilled = False
 	isFile = os.path.isfile(filename)
 	if isFile: 
-		file = ROOT.TFile(filename, "r")
+		file = ROOT.TFile.Open(xrdfilename, "r")
 		isOpen = file.IsOpen()
 		if isOpen: 
 			isValid = (file.GetListOfKeys().Contains("Runs") and file.GetListOfKeys().Contains("Events"))
@@ -101,7 +102,7 @@ for filename in listoffiles:
 
 print failedjobs
 print jobstatus
-jobstatus.to_csv(databasename)
+if (not dryrun): jobstatus.to_csv(databasename)
 
 print failedjobs
 

@@ -23,7 +23,7 @@ writetimingfile = True
 runastest = False
 
 if (runastest == True): 
-  numentriespertree = 1000
+  numentriespertree = 1000 # Need this number to have at least a couple of events written to thee output file
 else: 
   numentriespertree = None
 
