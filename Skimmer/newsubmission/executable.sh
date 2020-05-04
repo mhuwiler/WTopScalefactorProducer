@@ -5,9 +5,9 @@ echo $FILE_NAMES
 env
 
 
-WD=/afs/cern.ch/work/m/mhuwiler/software/cc7/Wtagging/CMSSW_10_2_6/src/WTopScalefactorProducer/Skimmer/newsubmission
+#WD=/afs/cern.ch/work/m/mhuwiler/software/cc7/Wtagging/CMSSW_10_2_6/src/WTopScalefactorProducer/Skimmer/newsubmission
 
-cd $WD
+#cd $WD
 
 #export SCRAM_ARCH=slc7_amd64_gcc700           #### Better to work on CC7 than SL6
 #export X509_USER_PROXY=${HOME}/private/x509up
@@ -18,7 +18,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh
 cd ${CMSSW_BASE}/src
 eval `scramv1 runtime -sh`
 
-cd $WD
+cd ${CMSSW_BASE}/src/*/Skimmer/newsubmission  #$WD
 
 
 python $CMSSW_BASE/src/WTopScalefactorProducer/Skimmer/newsubmission/ProductionScript.py "$GC_SCRATCH" "$FILE_NAMES" 
