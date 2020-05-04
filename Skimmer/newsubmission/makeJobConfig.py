@@ -9,7 +9,7 @@ import DASTools
 import Config as cf
 
 
-def WriteJobConfigFile(filename, workdir, dataset, architecture, multiplicity, maxtime, sepath, scratchpath="/scratch"): 
+def WriteJobConfigFile(filename, workdir, dataset, architecture, multiplicity, maxtime, localoutput, sepath, scratchpath="/scratch"): 
     with open("./etc/template.conf", "r") as template: 
         configfile = open(filename, 'w')
         
@@ -33,6 +33,7 @@ def WriteJobConfigFile(filename, workdir, dataset, architecture, multiplicity, m
         filecontent = filecontent.replace("$multiplicity$", str(multiplicity))
         filecontent = filecontent.replace("$sepath$", "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging")
         filecontent = filecontent.replace("$backend$", backend)
+        filecontent = filecontent.replace("$localoutput$", localoutput)
 
         configfile.write(filecontent)
         configfile.close()
@@ -75,7 +76,7 @@ if __name__ == "__main__":
 
    maxtime = args.multiplicity*4.
 
-   if WriteJobConfigFile(configfile, workdir, datasetfiles, args.backend, args.multiplicity, int(maxtime), "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch"): 
+   if WriteJobConfigFile(configfile, workdir, datasetfiles, args.backend, args.multiplicity, int(maxtime), "/work/mhuwiler/data/WScaleFactors/production", "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch"): 
 
     cmd = "go.py {} -cG".format(configfile)
     if not args.dry: os.system(cmd)

@@ -25,13 +25,20 @@ python $CMSSW_BASE/src/WTopScalefactorProducer/Skimmer/newsubmission/ProductionS
 
 # Additional manual copying of file for safety
 # /scratch/mhuwiler/Wtagging/production/${GC_TASK_ID}/${DATASETPATH}/
-DESTINATIONPATH=/work/mhuwiler/data/WScaleFactors/production/${GC_TASK_ID}/${DATASETPATH}/
+if [ -n "${LOCAL_OUTPUT_DIR// }" ]
+then
 
-mkdir -p $DESTINATIONPATH
+    DESTINATIONPATH=${LOCAL_OUTPUT_DIR}/${GC_TASK_ID}/${DATASETPATH}
 
-cp $GC_SCRATCH/out.root $DESTINATIONPATH/job_${GC_JOB_ID}_out.root
-cp $GC_SCRATCH/qualitycheck.pkl $DESTINATIONPATH/job_${GC_JOB_ID}_qualitycheck.pkl
-cp $GC_SCRATCH/timing.dat $DESTINATIONPATH/job_${GC_JOB_ID}_timing.dat
+    echo "Writing output files to local destination: ${DESTINATIONPATH}"
+
+    mkdir -p $DESTINATIONPATH
+
+    cp $GC_SCRATCH/out.root $DESTINATIONPATH/job_${GC_JOB_ID}_out.root
+    cp $GC_SCRATCH/qualitycheck.pkl $DESTINATIONPATH/job_${GC_JOB_ID}_qualitycheck.pkl
+    cp $GC_SCRATCH/timing.dat $DESTINATIONPATH/job_${GC_JOB_ID}_timing.dat
+
+fi
 
 echo $GC_SCRATCH
 ls -l $GC_SCRATCH
