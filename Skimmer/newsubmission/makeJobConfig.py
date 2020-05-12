@@ -6,34 +6,39 @@ import os
 #custom imports
 import Dataset
 import DASTools
-import Config as cf
+#import Config as cf
 
 
-def WriteJobConfigFile(filename, workdir, dataset, architecture, multiplicity, maxtime, localoutput, sepath, scratchpath="/scratch"): 
-    with open("./etc/template.conf", "r") as template: 
+def WriteJobConfigFile(filename, workdir, dataset, template, multiplicity, maxtime, localoutput, sepath, scratchpath="/scratch"): 
+    name = "./etc/"+template+".conf"
+    if not os.path.isfile(name): 
+      print "ERROR: The template:", name, "does not exist. Please make sure you select or create one in ./etc/ . "
+      return False
+
+    with open(name, "r") as template: 
         configfile = open(filename, 'w')
         
         datasettext=""
         for line in dataset: 
         	datasettext+=("\t"+line+"\n")
 
-        if architecture in cf.config: 
-          backend = cf.config[architecture]["backend"]
-          queue = cf.config[architecture]["queue"]
-        else : 
-          print "ERROR: The configuration \"", architecture, "\" is not known. Please add it to the file: Config.py. "
-          return False
+        #if architecture in cf.config: 
+        #  backend = cf.config[architecture]["backend"]
+        #  queue = cf.config[architecture]["queue"]
+        #else : 
+        #  print "ERROR: The configuration \"", architecture, "\" is not known. Please add it to the file: Config.py. "
+        #  return False
 
         filecontent = template.read()
         filecontent = filecontent.replace("$workdir$", workdir)
-        filecontent = filecontent.replace("$queue$", queue)
-        filecontent = filecontent.replace("$scratchpath$", scratchpath)
         filecontent = filecontent.replace("$maxtime$", str(maxtime))
-        filecontent = filecontent.replace("$dataset$", datasettext)
         filecontent = filecontent.replace("$multiplicity$", str(multiplicity))
-        filecontent = filecontent.replace("$sepath$", "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging")
-        filecontent = filecontent.replace("$backend$", backend)
-        filecontent = filecontent.replace("$localoutput$", localoutput)
+        filecontent = filecontent.replace("$dataset$", datasettext)
+        #filecontent = filecontent.replace("$queue$", queue)
+        #filecontent = filecontent.replace("$scratchpath$", scratchpath)
+        #filecontent = filecontent.replace("$sepath$", "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging")
+        #filecontent = filecontent.replace("$backend$", backend)
+        #filecontent = filecontent.replace("$localoutput$", localoutput)
 
         configfile.write(filecontent)
         configfile.close()
@@ -53,7 +58,8 @@ if __name__ == "__main__":
    parser.add_argument('-v', '--verbose', action='store_true', help = 'Give a lot of output (verbose)')
    parser.add_argument('-f', '--force', action='store_true', help="Force overwriting (the catalogue or job config file)")
    parser.add_argument('-m', '--multiplicity', action='store', type=int, default=10, help="Number of files per job") 
-   parser.add_argument('-g', '--backend', action='store', type=str, dest='backend', default="lxplus", help = "Which environment (job scheduler) from Config.py to use")
+   #parser.add_argument('-g', '--backend', action='store', type=str, dest='backend', default="lxplus", help = "Which environment (job scheduler) from Config.py to use")
+   parser.add_argument('-t', '--template', action='store', type=str, dest='template', default="t3psiSlurmMH", help = "Which Grid-Control template to start with (from etc/). ")
 
    args = parser.parse_args()  
  
@@ -76,7 +82,7 @@ if __name__ == "__main__":
 
    maxtime = args.multiplicity*4.
 
-   if WriteJobConfigFile(configfile, workdir, datasetfiles, args.backend, args.multiplicity, int(maxtime), "/work/mhuwiler/data/WScaleFactors/production", "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch"): 
+   if WriteJobConfigFile(configfile, workdir, datasetfiles, args.template, args.multiplicity, int(maxtime), "/work/mhuwiler/data/WScaleFactors/production", "srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/$USER/production/Wtagging", "/scratch"): 
 
     cmd = "go.py {} -cG".format(configfile)
     if not args.dry: os.system(cmd)
