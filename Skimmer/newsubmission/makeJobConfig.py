@@ -18,6 +18,7 @@ def WriteJobConfigFile(filename, workdir, dataset, architecture, multiplicity, m
         	datasettext+=("\t"+line+"\n")
 
         if architecture in cf.config: 
+          # TODO: add wall time management and memory request to the backend config 
           backend = cf.config[architecture]["backend"]
           queue = cf.config[architecture]["queue"]
         else : 

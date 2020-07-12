@@ -20,7 +20,7 @@ print "infile: ", infile
 print "outputDir: ", outputDir
 
 writetimingfile = True
-runastest = False
+runastest = True
 
 if (runastest == True): 
   numentriespertree = 1000 # Need this number to have at least a couple of events written to thee output file
