@@ -266,7 +266,7 @@ class Skimmer(Module):
         neutrino.SetPxPyPzE(MET.Px(), MET.Py(), pz, math.sqrt(MET.Px()**2 + MET.Py()**2 + pz**2))
         WcandLep = lepton + neutrino
         
-        if not WcandLep.Pt() >= self.minWPt: return False
+        if not WcandLep.Pt() >= self.minWPt: return False   
         
         # Find fat jet
         FatJets = list(Collection(event, "FatJet"))
@@ -334,11 +334,11 @@ class Skimmer(Module):
             ### a Top decays to W + b (Type 2 - fully merged top quark)
             gens = Collection(event, "GenPart")
             Wdaus =  [x for x in gens if x.pt>1 and 0<abs(x.pdgId)<9]
-            Wmoms =  [x for x in gens if x.pt>10 and abs(x.pdgId)==24]
+            Ws =  [x for x in gens if x.pt>10 and abs(x.pdgId)==24]
 
             TWdaus =  [x for x in gens if x.pt>1 and  0<abs(x.pdgId)<4]
             Tdaus =  [x for x in gens if x.pt>1 and (abs(x.pdgId)==5  or  abs(x.pdgId)==24 )]
-            Tmoms =  [x for x in gens if x.pt>10 and abs(x.pdgId)==6] 
+            Ts =  [x for x in gens if x.pt>10 and abs(x.pdgId)==6] 
             Top =  [x for x in gens if x.pdgId==6]
             AntiTop =  [x for x in gens if x.pdgId==-6]
             
@@ -351,9 +351,9 @@ class Skimmer(Module):
             self.matchedJ = 0
             self.matchedSJ = 0
 
-            if len(Wmoms)>0 and len(Wdaus)>0:
+            if len(Ws)>0 and len(Wdaus)>0:
               for dau in Wdaus:
-                for mom in Wmoms:
+                for mom in Ws:
                   try:
                     if mom == gens[dau.genPartIdxMother]: 
                       realVs.append(mom)
@@ -361,10 +361,10 @@ class Skimmer(Module):
                   except:
                     continue    
 
-            if len(Tmoms)>0 and len(Tdaus)>0:
+            if len(Ts)>0 and len(Tdaus)>0:   # TODO: remove? 
               for gdau in TWdaus :
                 for dau in Tdaus:
-                  for mom in Tmoms:
+                  for mom in Ts:
                     try:
                       if mom == gens[dau.genPartIdxMother] and dau == gens[gdau.genPartIdxMother]: 
                         realTs.append(mom)
@@ -384,6 +384,7 @@ class Skimmer(Module):
         self.isW = 0
         self.isWqq = 0
         self.isW2017 = 0
+        # TODO: check if we want to keep all matching definitions 
         if isMC == False:
             genjets = [None] * len(recoAK8)
 
@@ -405,15 +406,15 @@ class Skimmer(Module):
               else: self.isW2017 = 0
 
           
-          # simple gen matching
-          for V in Wmoms:
+          # simple gen matching   # TODO: remove? 
+          for V in Ws:
             gen_4v = ROOT.TLorentzVector()
             gen_4v.SetPtEtaPhiM(V.pt,V.eta,V.phi,V.mass)
             dR = jetAK8_4v.DeltaR(gen_4v)
             if dR < 0.8: self.isW = 1
 
           
-          # standard gen matching
+          # standard gen matching   # TODO: remove? 
           for V in realVs:
             gen_4v = ROOT.TLorentzVector()
             gen_4v.SetPtEtaPhiM(V.pt,V.eta,V.phi,V.mass)
@@ -429,7 +430,7 @@ class Skimmer(Module):
                   self.isWqq = 1
           
        
-        #for fully merged:
+        #for fully merged:  # TODO: remove this part (not used anymore)
         self.SJ0isW = -1
         # List of reco subjets:
         recosubjets = list(Collection(event,"SubJet"))
