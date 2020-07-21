@@ -6,6 +6,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.tools import *
 from WTopScalefactorProducer.Skimmer.PileupWeightTool import *
 from WTopScalefactorProducer.Skimmer.variables import recoverNeutrinoPz
+from WTopScalefactorProducer.Skimmer.SpecificYearConfig import SpecificYearConfig
 
 import math
 import random
@@ -37,10 +38,11 @@ import array
 #Leptonic W - lepton + MET has Pt > 150 GeV # did not apply this since we are missing MET eta
          
 class Skimmer(Module):
-    def __init__(self, Channel):
+    def __init__(self, Channel, year = 2018): # TODO: remove default value (hack for testing) 
         self.chan = Channel
         self.writeHistFile = True
         self.verbose = False
+        self.year = year
     def beginJob(self, histFile, histDirName):
         Module.beginJob(self, histFile, histDirName)
         # self.addObject( ROOT.TH1F('nGenEv',   'nGenEv',   3, 0, 3) )
@@ -77,6 +79,9 @@ class Skimmer(Module):
         self.puWeightTool = PileupWeightTool(yearMC=2018, yearData=2018) #FIXME
 
         self.nEvent = 0
+
+        self.yearSpecificConfig = SpecificYearConfig(self.year, self.verbose)
+        
 
         
     def endJob(self):
@@ -218,7 +223,7 @@ class Skimmer(Module):
           self.Vlep_type = 0
           lepton = muons[0].p4()
           iso = muons[0].pfRelIso03_all
-          if isMC: triggerweight = self.getSimplifiedMuonTriggerSF2018(muons[0].pt, muons[0].eta)
+          if isMC: triggerweight = yearSpecificConfig.MuonTriggerSF(muons[0].pt, muons[0].eta)     #self.getSimplifiedMuonTriggerSF2018(muons[0].pt, muons[0].eta)
 
         elif ("el" in self.chan and electronTight and (len(electrons) == 1) and (len(muons) == 0)) :  # There is a tight electron and no other loose muon or electron
           triggerEl = (event.HLT_Ele32_WPTight_Gsf or event.HLT_Ele35_WPTight_Gsf or event.HLT_Ele40_WPTight_Gsf or event.HLT_Ele115_CaloIdVT_GsfTrkIdT)
