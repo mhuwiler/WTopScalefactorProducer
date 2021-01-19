@@ -86,7 +86,7 @@ bkgs.append(TTs)
 #TTscompletion = ["oldprod/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8.root", "oldprod/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8.root"]
 bkgs.append(TTs)
 
-dir = "/work/mhuwiler/data/WScaleFactors/UL2017/UL17_Wtagging_files/" #"/eos/cms/store/group/phys_jetmet/mhuwiler/WSFnanoAODtuples/" #"/work/mhuwiler/data/WScaleFactors/added/"
+dir = "/scratch/mhuwiler/data/WTagging/UL17_Wtagging_files_new/" #"/eos/cms/store/group/phys_jetmet/mhuwiler/WSFnanoAODtuples/" #"/work/mhuwiler/data/WScaleFactors/added/"
 
 plotdir = "plots/"
 if "maxAK4CSV<" in cut: plotdir = "plots/WCR/"
@@ -361,7 +361,9 @@ def doCP(cutL,postfix=""):
       if legs[i] == "t#bar{t} merged W" : MCcut = cutL+"&&genmatchedAK8==1"
       elif legs[i] == "t#bar{t} unmerged W" : MCcut = cutL+"&&genmatchedAK8==0"
       else: MCcut = cutL
-      totalcut = "("+MCcut+")*(eventWeight*lumiWeight*"+str(lumi)+")"
+      totalcut = "("+MCcut+")*weight"
+      print "{} {}".format(bg, tree.GetMaximum("lumiWeight"))
+
       print "Name is: ", name
       for j, file in enumerate(bg):
         print "Using file: ", ROOT.TString(dir+file)
