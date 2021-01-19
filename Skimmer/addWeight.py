@@ -86,7 +86,7 @@ def processFile(filename, verbose=False):
             print("ERROR: Invalid year: {}, please specify a year from {}.\nNot setting weight.".format(args.year, integratedLumi.keys()))
             return
 
-        weight = (float(crosssection)*1000./float(numevents))*integratedLumi[args.year]
+        weight = (np.float32(crosssection)*1000./np.float32(numevents))*integratedLumi[args.year]
 
         if (verbose) : print("Cross section: {}, number of events: {}, weight: {}".format(crosssection, numevents, weight))
 
@@ -95,11 +95,11 @@ def processFile(filename, verbose=False):
 
     #else: Leq = 1.
     
-    print(sample, ": lumiWeight =", weight)
+    print(sample, ": lumiWeight =", np.float32(weight))
     
     # Variables declaration
-    lumiWeight = np.ones((1), dtype="float32")  # global event weight with lumi
-    totalWeight = np.ones((1), dtype='float32')
+    lumiWeight = array('f', [1.0]) #np.ones((1), dtype="float32")  # global event weight with lumi
+    totalWeight = array('f', [1.0]) #np.ones((1), dtype='float32')
     #eventWeight = np.empty((1), dtype='float32')
     
     # Looping over file content
@@ -122,8 +122,8 @@ def processFile(filename, verbose=False):
         tree.GetEntry(event)
 
         
-        lumiWeight[0] = weight 
-        totalWeight[0] = tree.eventWeight*weight
+        lumiWeight[0] = np.float32(weight) 
+        totalWeight[0] = np.float32(tree.eventWeight*weight)
 
         if (verbose and event == 0): print("Total weight: {}".format(tree.eventWeight*weight))
             
@@ -149,14 +149,15 @@ if (os.path.isfile(args.directory)):
     processFile(args.directory, args.verbose)
 else: 
     for d in os.listdir(args.directory):
+        filename = args.directory+'/'+d
         if not '.root' in d: continue
         if len(filterset)>0 and not filterset in d: continue
         
         if args.singlecore:
             print(" -", d)
-            processFile(args.directory+'/'+d, args.verbose)
+            processFile(filename, args.verbose)
         else:
-            p = multiprocessing.Process(target=processFile, args=(d,args.verbose,))
+            p = multiprocessing.Process(target=processFile, args=(filename,args.verbose,))
             jobs.append(p)
             p.start()
         #exit()
